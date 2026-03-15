@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airbnb Inventory Checklist</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Georgia', serif;
+    background: #f7f5f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+  }
+
+  .page { max-width: 780px; margin: 0 auto; }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #1a1a1a;
+    flex-wrap: wrap;
+  }
+
+  .header-left h1 {
+    font-size: 2rem;
+    font-weight: normal;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .header-left p {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+    font-family: 'Courier New', monospace;
+  }
+
+  .header-right { text-align: right; flex-shrink: 0; }
+
+  .prog-count {
+    font-size: 2rem;
+    font-weight: normal;
+    font-family: 'Courier New', monospace;
+    letter-spacing: -1px;
+  }
+
+  .prog-label-sm {
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-family: sans-serif;
+  }
+
+  .prog-bar-bg {
+    height: 4px;
+    background: #e0ddd6;
+    border-radius: 2px;
+    margin: 1rem 0 2rem;
+    overflow: hidden;
+  }
+
+  .prog-bar-fill {
+    height: 100%;
+    background: #1a1a1a;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  .section {
+    margin-bottom: 1.25rem;
+    border: 1px solid #d4d0c8;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .sec-head:hover { background: #faf9f6; }
+  .sec-head.open { border-bottom: 1px solid #e8e5de; }
+
+  .sec-icon { font-size: 16px; flex-shrink: 0; }
+
+  .sec-title-wrap { flex: 1; min-width: 0; }
+
+  .sec-title-input {
+    font-size: 15px;
+    font-family: 'Georgia', serif;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #1a1a1a;
+    outline: none;
+    cursor: pointer;
+    font-weight: normal;
+  }
+
+  .sec-title-input:focus { cursor: text; }
+
+  .sec-count {
+    font-size: 12px;
+    color: #999;
+    font-family: 'Courier New', monospace;
+    flex-shrink: 0;
+  }
+
+  .del-sec-btn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #ccc;
+    cursor: pointer;
+    padding: 0 2px;
+    flex-shrink: 0;
+    display: none;
+    transition: color 0.15s;
+  }
+
+  .sec-head:hover .del-sec-btn { display: block; }
+  .del-sec-btn:hover { color: #c0392b; }
+
+  .chev {
+    font-size: 10px;
+    color: #bbb;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    font-family: sans-serif;
+  }
+
+  .chev.open { transform: rotate(90deg); }
+
+  .items-wrap { }
+
+  .col-heads {
+    display: grid;
+    grid-template-columns: 17px 1fr 52px 18px;
+    gap: 8px;
+    padding: 5px 16px 6px;
+    border-bottom: 1px solid #e8e5de;
+    align-items: center;
+  }
+
+  .col-label {
+    font-size: 11px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: sans-serif;
+  }
+
+  .col-label.center { text-align: center; }
+
+  .item {
+    display: grid;
+    grid-template-columns: 17px 1fr 52px 18px;
+    gap: 8px;
+    padding: 7px 16px;
+    align-items: center;
+    transition: background 0.12s;
+  }
+
+  .item:hover { background: #faf9f6; }
+
+  .cb {
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid #bbb;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+
+  .cb.on { background: #1a1a1a; border-color: #1a1a1a; }
+  .ck { display: none; font-size: 11px; color: #fff; line-height: 1; }
+  .cb.on .ck { display: block; }
+
+  .item-input {
+    font-size: 14px;
+    font-family: 'Georgia', serif;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #1a1a1a;
+    outline: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: background 0.15s;
+    min-width: 0;
+  }
+
+  .item-input:focus { background: #f7f5f0; }
+  .item-input.done { color: #bbb; text-decoration: line-through; }
+
+  .qty-input {
+    width: 52px;
+    font-size: 13px;
+    font-family: 'Courier New', monospace;
+    text-align: center;
+    border: 1px solid #e0ddd6;
+    border-radius: 4px;
+    padding: 3px 4px;
+    background: #f7f5f0;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .qty-input:focus { border-color: #999; }
+
+  .del-btn {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #ddd;
+    cursor: pointer;
+    padding: 0;
+    display: none;
+    transition: color 0.15s;
+    text-align: center;
+  }
+
+  .item:hover .del-btn { display: block; }
+  .del-btn:hover { color: #c0392b; }
+
+  .add-item-row {
+    display: grid;
+    grid-template-columns: 17px 1fr 52px 18px;
+    gap: 8px;
+    padding: 7px 16px 9px;
+    border-top: 1px dashed #e8e5de;
+    margin-top: 2px;
+    align-items: center;
+  }
+
+  .add-item-row input {
+    font-size: 14px;
+    font-family: 'Georgia', serif;
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #1a1a1a;
+    outline: none;
+    min-width: 0;
+  }
+
+  .add-item-row input::placeholder { color: #ccc; }
+
+  .add-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #ccc;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    text-align: center;
+    transition: color 0.15s;
+  }
+
+  .add-btn:hover { color: #1a1a1a; }
+
+  .bottom-bar {
+    display: flex;
+    gap: 10px;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .add-sec-form { display: flex; gap: 8px; flex: 1; min-width: 200px; }
+
+  .add-sec-form input {
+    font-size: 14px;
+    font-family: 'Georgia', serif;
+    flex: 1;
+    border: 1px solid #d4d0c8;
+    border-radius: 6px;
+    padding: 0 12px;
+    height: 36px;
+    background: #fff;
+    color: #1a1a1a;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .add-sec-form input:focus { border-color: #888; }
+  .add-sec-form input::placeholder { color: #bbb; }
+
+  .btn {
+    font-size: 13px;
+    font-family: sans-serif;
+    padding: 0 16px;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid #d4d0c8;
+    background: #fff;
+    color: #555;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+
+  .btn:hover { background: #f7f5f0; border-color: #888; color: #1a1a1a; }
+
+  .btn-primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .btn-primary:hover { background: #333; }
+
+  footer {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e0ddd6;
+    font-size: 12px;
+    color: #aaa;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .btn, .add-sec-form, .add-btn, .del-btn, .del-sec-btn, footer { display: none !important; }
+    .add-item-row { display: none !important; }
+    .section { break-inside: avoid; }
+  }
+
+  @media (max-width: 500px) {
+    .header-left h1 { font-size: 1.5rem; }
+    .header-right { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="header-left">
+      <h1>Airbnb inventory<br>checklist</h1>
+      <p id="date-line"></p>
+    </div>
+    <div class="header-right">
+      <div class="prog-count" id="prog-count">0/0</div>
+      <div class="prog-label-sm">items confirmed</div>
+    </div>
+  </header>
+
+  <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+
+  <div id="sections"></div>
+
+  <div class="bottom-bar">
+    <div class="add-sec-form">
+      <input id="new-sec-input" placeholder="New section name..." onkeydown="if(event.key==='Enter')addSection()">
+      <button class="btn btn-primary" onclick="addSection()">+ Add section</button>
+    </div>
+    <button class="btn" onclick="resetAll()">Reset checks</button>
+    <button class="btn" onclick="window.print()">Print</button>
+  </div>
+
+  <footer>
+    <span>Airbnb Inventory Checklist</span>
+    <span id="footer-stats"></span>
+  </footer>
+</div>
+
+<script>
+const ICONS = ['🍳','🛏️','🚿','🛋️','🔌','🧹','🧴','🌿','📦','🔑','🎮','🧺'];
+let iIdx = 0;
+
+let data = [
+  {title:"Kitchen & dining", icon:"🍳", open:true, items:[
+    {t:"Dinner plates",q:"4",c:false},{t:"Side plates",q:"4",c:false},{t:"Bowls",q:"4",c:false},
+    {t:"Mugs",q:"4",c:false},{t:"Glasses (water)",q:"4",c:false},{t:"Wine glasses",q:"4",c:false},
+    {t:"Cutlery set (forks, knives, spoons)",q:"4",c:false},{t:"Serving spoons",q:"2",c:false},
+    {t:"Chef's knife",q:"1",c:false},{t:"Chopping board",q:"1",c:false},
+    {t:"Frying pan",q:"1",c:false},{t:"Saucepan",q:"2",c:false},
+    {t:"Baking tray",q:"1",c:false},{t:"Colander",q:"1",c:false},
+    {t:"Tin opener",q:"1",c:false},{t:"Peeler",q:"1",c:false},
+    {t:"Kettle",q:"1",c:false},{t:"Toaster",q:"1",c:false},
+    {t:"Coffee maker / cafetière",q:"1",c:false},{t:"Dish rack or dishwasher",q:"1",c:false}
+  ]},
+  {title:"Bedroom", icon:"🛏️", open:true, items:[
+    {t:"Bed frame",q:"1",c:false},{t:"Mattress",q:"1",c:false},
+    {t:"Pillows",q:"2",c:false},{t:"Pillow cases",q:"4",c:false},
+    {t:"Fitted sheets",q:"2",c:false},{t:"Flat sheets",q:"2",c:false},
+    {t:"Duvet / comforter",q:"1",c:false},{t:"Duvet covers",q:"2",c:false},
+    {t:"Bedside table",q:"1",c:false},{t:"Lamp",q:"1",c:false},
+    {t:"Wardrobe / closet",q:"1",c:false},{t:"Hangers",q:"10",c:false},
+    {t:"Dresser / chest of drawers",q:"1",c:false},{t:"Mirror",q:"1",c:false}
+  ]},
+  {title:"Bathroom", icon:"🚿", open:true, items:[
+    {t:"Bath towels",q:"4",c:false},{t:"Hand towels",q:"4",c:false},
+    {t:"Face cloths",q:"4",c:false},{t:"Bath mat",q:"1",c:false},
+    {t:"Toilet brush",q:"1",c:false},{t:"Toilet paper rolls",q:"4",c:false},
+    {t:"Shower curtain & rings (if needed)",q:"1",c:false},
+    {t:"Soap / hand wash",q:"1",c:false},{t:"Shampoo & conditioner",q:"1",c:false},
+    {t:"Hair dryer",q:"1",c:false}
+  ]},
+  {title:"Living room", icon:"🛋️", open:true, items:[
+    {t:"Sofa",q:"1",c:false},{t:"Coffee table",q:"1",c:false},
+    {t:"TV",q:"1",c:false},{t:"TV remote",q:"1",c:false},
+    {t:"Throw blanket",q:"1",c:false},{t:"Cushions",q:"4",c:false},
+    {t:"Floor lamp",q:"1",c:false},{t:"Bookshelf / storage unit",q:"1",c:false}
+  ]},
+  {title:"Laundry & cleaning", icon:"🧺", open:true, items:[
+    {t:"Washing machine",q:"1",c:false},{t:"Dryer or drying rack",q:"1",c:false},
+    {t:"Iron",q:"1",c:false},{t:"Ironing board",q:"1",c:false},
+    {t:"Laundry detergent",q:"1",c:false},{t:"Vacuum cleaner",q:"1",c:false},
+    {t:"Mop & bucket",q:"1",c:false},{t:"Broom & dustpan",q:"1",c:false},
+    {t:"Cleaning sprays",q:"1",c:false},{t:"Bin bags / trash bags",q:"10",c:false},
+    {t:"Indoor bins",q:"2",c:false}
+  ]},
+  {title:"Tech & utilities", icon:"🔌", open:true, items:[
+    {t:"WiFi router",q:"1",c:false},{t:"Extension leads / power strips",q:"2",c:false},
+    {t:"Smoke detector",q:"1",c:false},{t:"Carbon monoxide detector",q:"1",c:false},
+    {t:"Fire extinguisher",q:"1",c:false},{t:"First aid kit",q:"1",c:false},
+    {t:"Spare lightbulbs",q:"4",c:false},{t:"Torch / flashlight",q:"1",c:false}
+  ]}
+];
+
+function totalStats() {
+  let tot = 0, done = 0;
+  data.forEach(s => s.items.forEach(it => { tot++; if (it.c) done++; }));
+  return { tot, done };
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function render() {
+  const con = document.getElementById('sections');
+  con.innerHTML = '';
+  const { tot, done } = totalStats();
+  document.getElementById('prog-count').textContent = `${done}/${tot}`;
+  document.getElementById('prog-fill').style.width = tot ? Math.round(done / tot * 100) + '%' : '0%';
+  document.getElementById('footer-stats').textContent = `${done} of ${tot} confirmed`;
+
+  data.forEach((sec, si) => {
+    const secDone = sec.items.filter(i => i.c).length;
+    const el = document.createElement('div');
+    el.className = 'section';
+    el.innerHTML = `
+      <div class="sec-head ${sec.open ? 'open' : ''}" id="sh-${si}">
+        <span class="sec-icon">${sec.icon}</span>
+        <div class="sec-title-wrap">
+          <input class="sec-title-input" value="${esc(sec.title)}" onchange="data[${si}].title=this.value;render()" onclick="event.stopPropagation()" placeholder="Section name">
+        </div>
+        <span class="sec-count">${secDone}/${sec.items.length}</span>
+        <button class="del-sec-btn" onclick="event.stopPropagation();delSection(${si})">✕</button>
+        <span class="chev ${sec.open ? 'open' : ''}">▶</span>
+      </div>
+      <div class="items-wrap" id="items-${si}" style="display:${sec.open ? 'block' : 'none'}">
+        <div class="col-heads">
+          <div></div>
+          <div class="col-label">Item</div>
+          <div class="col-label center">Qty</div>
+          <div></div>
+        </div>
+        ${sec.items.map((it, ii) => `
+          <div class="item">
+            <div class="cb ${it.c ? 'on' : ''}" onclick="toggleItem(${si},${ii})"><span class="ck">✓</span></div>
+            <input class="item-input${it.c ? ' done' : ''}" value="${esc(it.t)}" onchange="data[${si}].items[${ii}].t=this.value" placeholder="Item name">
+            <input class="qty-input" type="text" value="${esc(it.q)}" onchange="data[${si}].items[${ii}].q=this.value" onclick="this.select()">
+            <button class="del-btn" onclick="delItem(${si},${ii})">✕</button>
+          </div>`).join('')}
+        <div class="add-item-row">
+          <div></div>
+          <input id="ni-${si}" placeholder="Add item..." onkeydown="if(event.key==='Enter')addItem(${si})">
+          <div></div>
+          <button class="add-btn" onclick="addItem(${si})">+</button>
+        </div>
+      </div>`;
+
+    con.appendChild(el);
+
+    el.querySelector(`#sh-${si}`).addEventListener('click', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      sec.open = !sec.open;
+      el.querySelector('.items-wrap').style.display = sec.open ? 'block' : 'none';
+      el.querySelector('.sec-head').classList.toggle('open', sec.open);
+      el.querySelector('.chev').classList.toggle('open', sec.open);
+    });
+  });
+}
+
+function toggleItem(si, ii) { data[si].items[ii].c = !data[si].items[ii].c; render(); }
+function delItem(si, ii) { data[si].items.splice(ii, 1); render(); }
+function delSection(si) { if (confirm('Delete "' + data[si].title + '"?')) { data.splice(si, 1); render(); } }
+function addItem(si) {
+  const inp = document.getElementById(`ni-${si}`);
+  const v = inp.value.trim(); if (!v) return;
+  data[si].items.push({ t: v, q: '1', c: false });
+  inp.value = ''; render();
+  setTimeout(() => { const el = document.getElementById(`ni-${si}`); if (el) el.focus(); }, 30);
+}
+function addSection() {
+  const inp = document.getElementById('new-sec-input');
+  const v = inp.value.trim(); if (!v) return;
+  data.push({ title: v, icon: ICONS[iIdx % ICONS.length], open: true, items: [] });
+  iIdx++; inp.value = ''; render();
+}
+function resetAll() { if (confirm('Clear all checkmarks?')) { data.forEach(s => s.items.forEach(it => it.c = false)); render(); } }
+
+document.getElementById('date-line').textContent = 'Generated ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+render();
+</script>
+</body>
+</html>
